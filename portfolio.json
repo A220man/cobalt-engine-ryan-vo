@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "name": "cobalt-engine-ryan-vo",
+  "owner": "A220man",
+  "email": "ryandtvo@gmail.com",
+  "domain": "AI/ML developer tools",
+  "summary": "Work in progress: cobalt-engine-ryan-vo",
+  "workflows": [
+    "Create and manage isolated AI agents with dedicated workspaces",
+    "Expose agent memory via MCP for external AI consumption",
+    "Admin pre-configures specialist agents for multi-user environments"
+  ],
+  "auth": "oidc-keycloak-saml-broker",
+  "llm_providers": [
+    "openai-compatible",
+    "anthropic",
+    "gemini",
+    "ollama"
+  ],
+  "status": "work-in-progress"
+}
