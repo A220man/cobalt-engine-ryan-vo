@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
 ## 1.0.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
@@ -17,7 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Health check endpoint
 - Basic agent CRUD API
 - Frontend agent dashboard
-
+- Agent workspace file operations with sandbox isolation (Issue #1160)
+  - File read, write, list, delete operations
+  - Path traversal protection
+  - Cross-workspace access prevention
 ## [1.0.0] - 2026-10-22
 
 ### Added

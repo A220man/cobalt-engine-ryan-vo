@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_feature": "project-skeleton",
+  "current_feature": "agent-workspace-isolation",
   "features": [
     {
       "id": "project-skeleton",
@@ -37,19 +37,7 @@
         "frontend/src/api/client.ts",
         "frontend/src/types/index.ts",
         "frontend/src/index.css",
-        "frontend/package.json",
-        "frontend/vite.config.ts",
-        "frontend/Dockerfile",
-        "frontend/nginx.conf",
-        "compose.yaml",
-        ".env.example",
-        "README.md",
-        "LICENSE",
-        "CHANGELOG.md",
-        "pyproject.toml",
-        "portfolio.json",
-        ".gitignore",
-        ".github/workflows/ci.yml"
+        "frontend/package.json"
       ],
       "tests": [
         "backend/tests/test_health.py",
@@ -65,14 +53,20 @@
     {
       "id": "agent-workspace-isolation",
       "title": "Agent workspace sandbox isolation (Issue #1160)",
-      "status": "planned",
+      "status": "in_progress",
       "acceptance": [
         "Each agent confined to its workspace directory",
         "Cross-workspace file access returns permission error",
         "File operations validated before execution"
       ],
-      "implementation": [],
-      "tests": []
+      "implementation": [
+        "backend/app/api/files.py",
+        "backend/app/api/schemas.py",
+        "backend/app/api/__init__.py"
+      ],
+      "tests": [
+        "backend/tests/test_files.py"
+      ]
     },
     {
       "id": "mcp-server-exposure",

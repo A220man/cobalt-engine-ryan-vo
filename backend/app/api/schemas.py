@@ -1,8 +1,7 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Union
 from pydantic import BaseModel, ConfigDict
 from enum import Enum
-
 
 class UserRole(str, Enum):
     VIEWER = "viewer"
@@ -80,8 +79,33 @@ class AgentRead(AgentBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+class FileOperation(str, Enum):
+    READ = "read"
+    WRITE = "write"
+    LIST = "list"
+    DELETE = "delete"
 
 
+class FileRequest(BaseModel):
+    path: str
+    content: Optional[str] = None
+
+
+class FileResponse(BaseModel):
+    path: str
+    content: Optional[str] = None
+    is_directory: bool = False
+    size: Optional[int] = None
+    modified_at: Optional[datetime] = None
+
+
+class FileListResponse(BaseModel):
+    files: list[FileResponse]
+    path: str
+
+from typing import Union
+
+FileOperationResponse = Union[FileResponse, FileListResponse]
 class HealthResponse(BaseModel):
     status: str
     version: str = "1.0.0"
