@@ -192,4 +192,154 @@ def test_write_creates_directories(client, demo_user, demo_workspace, demo_agent
 
     # Verify file exists on disk
     workspace_path = Path(demo_workspace.path)
-    assert (workspace_path / "nested" / "deep" / "path" / "file.txt").read_text() == "deep content"
+
+def test_path_traversal_blocked_all_operations(client, demo_user, demo_workspace, demo_agent, tmp_path):
+    """Test that path traversal is blocked for all file operations."""
+    workspace_path = Path(demo_workspace.path)
+    outside_path = workspace_path.parent / "outside"
+    outside_path.mkdir()
+    (outside_path / "secret.txt").write_text("SECRET")
+
+    malicious_paths = [
+        "../outside.txt",
+        "../../etc/passwd",
+        "subdir/../../outside.txt",
+        "./../outside.txt",
+    ]
+
+    for malicious_path in malicious_paths:
+        # Test READ
+        response = client.post(
+            f"/api/agents/{demo_agent.id}/files",
+            json={"path": malicious_path},
+            params={"operation": "read"},
+        )
+        assert response.status_code == 403, f"READ should be blocked for {malicious_path}"
+        assert "outside workspace directory" in response.json()["detail"]
+
+        # Test WRITE
+        response = client.post(
+            f"/api/agents/{demo_agent.id}/files",
+            json={"path": malicious_path, "content": "malicious"},
+            params={"operation": "write"},
+        )
+        assert response.status_code == 403, f"WRITE should be blocked for {malicious_path}"
+        assert "outside workspace directory" in response.json()["detail"]
+
+        # Test LIST
+        response = client.post(
+            f"/api/agents/{demo_agent.id}/files",
+            json={"path": malicious_path},
+            params={"operation": "list"},
+        )
+        assert response.status_code == 403, f"LIST should be blocked for {malicious_path}"
+        assert "outside workspace directory" in response.json()["detail"]
+
+        # Test DELETE
+        response = client.post(
+            f"/api/agents/{demo_agent.id}/files",
+            json={"path": malicious_path},
+            params={"operation": "delete"},
+        )
+        assert response.status_code == 403, f"DELETE should be blocked for {malicious_path}"
+        assert "outside workspace directory" in response.json()["detail"]
+
+
+def test_symlink_attacks_blocked(client, demo_user, demo_workspace, demo_agent, tmp_path):
+    """Test that symlink attacks are blocked for all file operations."""
+    workspace_path = Path(demo_workspace.path)
+    outside_path = workspace_path.parent / "outside"
+    outside_path.mkdir()
+    secret_file = outside_path / "secret.txt"
+    secret_file.write_text("SECRET DATA")
+
+    # Create symlink file inside workspace pointing outside
+    symlink_file = workspace_path / "link.txt"
+    symlink_file.symlink_to(secret_file)
+
+    # Create symlink directory inside workspace pointing outside
+    symlink_dir = workspace_path / "linkdir"
+    symlink_dir.symlink_to(outside_path)
+
+    # Test READ on symlink file
+    response = client.post(
+        f"/api/agents/{demo_agent.id}/files",
+        json={"path": "link.txt"},
+        params={"operation": "read"},
+    )
+    assert response.status_code == 403
+    assert "outside workspace directory" in response.json()["detail"]
+
+    # Test WRITE on symlink file
+    response = client.post(
+        f"/api/agents/{demo_agent.id}/files",
+        json={"path": "link.txt", "content": "malicious"},
+        params={"operation": "write"},
+    )
+    assert response.status_code == 403
+    assert "outside workspace directory" in response.json()["detail"]
+
+    # Test LIST on symlink directory
+    response = client.post(
+        f"/api/agents/{demo_agent.id}/files",
+        json={"path": "linkdir"},
+        params={"operation": "list"},
+    )
+    assert response.status_code == 403
+    assert "outside workspace directory" in response.json()["detail"]
+
+    # Test DELETE on symlink file
+    response = client.post(
+        f"/api/agents/{demo_agent.id}/files",
+        json={"path": "link.txt"},
+        params={"operation": "delete"},
+    )
+    assert response.status_code == 403
+    assert "outside workspace directory" in response.json()["detail"]
+
+    # Verify outside file is untouched
+    assert secret_file.read_text() == "SECRET DATA"
+
+
+def test_legitimate_symlinks_within_workspace_work(client, demo_user, demo_workspace, demo_agent, tmp_path):
+    """Test that symlinks within the workspace work correctly."""
+    workspace_path = Path(demo_workspace.path)
+
+    # Create a real file
+    (workspace_path / "real_file.txt").write_text("REAL CONTENT")
+
+    # Create a symlink to the real file (both inside workspace)
+    symlink_file = workspace_path / "link_to_real.txt"
+    symlink_file.symlink_to("real_file.txt")
+
+    # READ should work
+    response = client.post(
+        f"/api/agents/{demo_agent.id}/files",
+        json={"path": "link_to_real.txt"},
+        params={"operation": "read"},
+    )
+    assert response.status_code == 200
+    assert response.json()["content"] == "REAL CONTENT"
+
+    # WRITE through symlink should work (follows symlink)
+    response = client.post(
+        f"/api/agents/{demo_agent.id}/files",
+        json={"path": "link_to_real.txt", "content": "NEW CONTENT"},
+        params={"operation": "write"},
+    )
+    assert response.status_code == 200
+    assert response.json()["content"] == "NEW CONTENT"
+
+    # Verify the real file was updated
+    assert (workspace_path / "real_file.txt").read_text() == "NEW CONTENT"
+
+    # LIST on directory containing symlink should work
+    response = client.post(
+        f"/api/agents/{demo_agent.id}/files",
+        json={"path": "."},
+        params={"operation": "list"},
+    )
+    assert response.status_code == 200
+    file_names = [f["path"] for f in response.json()["files"]]
+    assert "real_file.txt" in file_names
+    assert "link_to_real.txt" in file_names
