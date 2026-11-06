@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
 ## 1.2.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
@@ -31,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Cross-workspace access prevention
   - Symlink attack protection
   - Comprehensive test coverage for security properties
+  - Frontend file browser for agent workspaces
 ## [1.0.0] - 2026-10-22
 
 ### Added

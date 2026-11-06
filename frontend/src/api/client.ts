@@ -1,5 +1,5 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios'
-import type { Agent, Workspace, User, HealthResponse } from '../types'
+import type { Agent, Workspace, User, HealthResponse, FileRequest, FileResponse, FileListResponse, FileOperation } from '../types'
 
 declare global {
   interface ImportMetaEnv {
@@ -108,6 +108,39 @@ class ApiClient {
   async getCurrentUser(): Promise<User> {
     const response = await this.client.get<User>('/api/users/me')
     return response.data
+  }
+
+  // Files
+  async fileOperation(
+    agentId: number,
+    operation: FileOperation,
+    request: FileRequest
+  ): Promise<FileResponse | FileListResponse> {
+    const response = await this.client.post<FileResponse | FileListResponse>(
+      `/api/agents/${agentId}/files?operation=${operation}`,
+      request
+    )
+    return response.data
+  }
+
+  async readFile(agentId: number, path: string): Promise<FileResponse> {
+    const result = await this.fileOperation(agentId, 'read', { path })
+    return result as FileResponse
+  }
+
+  async writeFile(agentId: number, path: string, content: string): Promise<FileResponse> {
+    const result = await this.fileOperation(agentId, 'write', { path, content })
+    return result as FileResponse
+  }
+
+  async listFiles(agentId: number, path: string): Promise<FileListResponse> {
+    const result = await this.fileOperation(agentId, 'list', { path })
+    return result as FileListResponse
+  }
+
+  async deleteFile(agentId: number, path: string): Promise<FileResponse> {
+    const result = await this.fileOperation(agentId, 'delete', { path })
+    return result as FileResponse
   }
 }
 

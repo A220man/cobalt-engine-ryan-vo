@@ -53,16 +53,21 @@
     {
       "id": "agent-workspace-isolation",
       "title": "Agent workspace sandbox isolation (Issue #1160)",
-      "status": "in_progress",
+      "status": "done",
       "acceptance": [
         "Each agent confined to its workspace directory",
         "Cross-workspace file access returns permission error",
-        "File operations validated before execution"
+        "File operations validated before execution",
+        "Frontend file browser for agent workspaces"
       ],
       "implementation": [
         "backend/app/api/files.py",
         "backend/app/api/schemas.py",
-        "backend/app/api/__init__.py"
+        "backend/app/api/__init__.py",
+        "frontend/src/components/FileBrowser.tsx",
+        "frontend/src/api/client.ts",
+        "frontend/src/types/index.ts",
+        "frontend/src/components/AgentDetail.tsx"
       ],
       "tests": [
         "backend/tests/test_files.py"
