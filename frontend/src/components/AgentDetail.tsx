@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { api } from '../api/client'
 import type { Agent } from '../types'
+import { FileBrowser } from './FileBrowser'
 
 export function AgentDetail() {
   const { id } = useParams<{ id: string }>()
   const [agent, setAgent] = useState<Agent | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'details' | 'files'>('details')
 
   useEffect(() => {
     async function loadAgent() {
@@ -57,61 +59,86 @@ export function AgentDetail() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="card">
-            <h2 className="text-lg font-semibold mb-4">Description</h2>
-            <p className="text-gray-600 whitespace-pre-wrap">{agent.description || 'No description provided'}</p>
+      <div className="border-b border-gray-200">
+        <nav className="flex gap-4" aria-label="Agent detail tabs">
+          <button
+            onClick={() => setActiveTab('details')}
+            className={`pb-3 px-1 border-b-2 font-medium text-sm ${activeTab === 'details' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          >
+            Details
+          </button>
+          <button
+            onClick={() => setActiveTab('files')}
+            className={`pb-3 px-1 border-b-2 font-medium text-sm ${activeTab === 'files' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          >
+            Files
+          </button>
+        </nav>
+      </div>
+
+      {activeTab === 'details' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="card">
+              <h2 className="text-lg font-semibold mb-4">Description</h2>
+              <p className="text-gray-600 whitespace-pre-wrap">{agent.description || 'No description provided'}</p>
+            </div>
+
+            <div className="card">
+              <h2 className="text-lg font-semibold mb-4">System Prompt</h2>
+              <pre className="bg-gray-50 p-4 rounded-lg text-sm overflow-x-auto whitespace-pre-wrap font-mono">
+                {agent.system_prompt || 'No system prompt configured'}
+              </pre>
+            </div>
           </div>
 
-          <div className="card">
-            <h2 className="text-lg font-semibold mb-4">System Prompt</h2>
-            <pre className="bg-gray-50 p-4 rounded-lg text-sm overflow-x-auto whitespace-pre-wrap font-mono">
-              {agent.system_prompt || 'No system prompt configured'}
-            </pre>
-          </div>
-        </div>
+          <div className="space-y-6">
+            <div className="card">
+              <h2 className="text-lg font-semibold mb-4">Details</h2>
+              <dl className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">ID</dt>
+                  <dd className="font-mono font-medium">{agent.id}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">Workspace</dt>
+                  <dd>Workspace #{agent.workspace_id}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">Owner</dt>
+                  <dd>User #{agent.owner_id}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">Created</dt>
+                  <dd>{new Date(agent.created_at).toLocaleString()}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">Updated</dt>
+                  <dd>{new Date(agent.updated_at).toLocaleString()}</dd>
+                </div>
+              </dl>
+            </div>
 
-        <div className="space-y-6">
-          <div className="card">
-            <h2 className="text-lg font-semibold mb-4">Details</h2>
-            <dl className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-gray-500">ID</dt>
-                <dd className="font-mono font-medium">{agent.id}</dd>
+            <div className="card">
+              <h2 className="text-lg font-semibold mb-4">Actions</h2>
+              <div className="space-y-2">
+                <Link to={`/agents/${agent.id}/edit`} className="btn btn-secondary w-full justify-start">
+                  Edit Agent
+                </Link>
+                <button className="btn btn-danger w-full justify-start">
+                  Delete Agent
+                </button>
               </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Workspace</dt>
-                <dd>Workspace #{agent.workspace_id}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Owner</dt>
-                <dd>User #{agent.owner_id}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Created</dt>
-                <dd>{new Date(agent.created_at).toLocaleString()}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Updated</dt>
-                <dd>{new Date(agent.updated_at).toLocaleString()}</dd>
-              </div>
-            </dl>
-          </div>
-
-          <div className="card">
-            <h2 className="text-lg font-semibold mb-4">Actions</h2>
-            <div className="space-y-2">
-              <Link to={`/agents/${agent.id}/edit`} className="btn btn-secondary w-full justify-start">
-                Edit Agent
-              </Link>
-              <button className="btn btn-danger w-full justify-start">
-                Delete Agent
-              </button>
             </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {activeTab === 'files' && (
+        <div className="card">
+          <FileBrowser agentId={agent.id} />
+        </div>
+      )}
     </div>
   )
 }

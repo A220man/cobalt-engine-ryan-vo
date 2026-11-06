@@ -34,6 +34,26 @@ export interface Agent {
   updated_at: string
 }
 
+export type FileOperation = 'read' | 'write' | 'list' | 'delete'
+
+export interface FileRequest {
+  path: string
+  content?: string
+}
+
+export interface FileResponse {
+  path: string
+  is_directory: boolean
+  size: number | null
+  modified_at: string | null
+  content?: string
+}
+
+export interface FileListResponse {
+  files: FileResponse[]
+  path: string
+}
+
 export interface HealthResponse {
   status: string
   version: string

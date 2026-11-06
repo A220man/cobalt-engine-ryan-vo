@@ -25,14 +25,15 @@ Tests: `backend/tests/test_health.py`, `backend/tests/test_workspaces.py`, `back
 
 ### agent-workspace-isolation — Agent workspace sandbox isolation (Issue #1160)
 
-Status: in_progress
+Status: done
 
 Acceptance:
 - Each agent confined to its workspace directory
 - Cross-workspace file access returns permission error
 - File operations validated before execution
+- Frontend file browser for agent workspaces
 
-Implementation: `backend/app/api/files.py`, `backend/app/api/schemas.py`, `backend/app/api/__init__.py`
+Implementation: `backend/app/api/files.py`, `backend/app/api/schemas.py`, `backend/app/api/__init__.py`, `frontend/src/components/FileBrowser.tsx`, `frontend/src/api/client.ts`, `frontend/src/types/index.ts`, `frontend/src/components/AgentDetail.tsx`
 
 Tests: `backend/tests/test_files.py`
 
