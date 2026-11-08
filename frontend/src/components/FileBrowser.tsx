@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { api } from '../api/client'
 import type { FileResponse } from '../types'
 
@@ -10,7 +10,6 @@ interface FileBrowserProps {
 export function FileBrowser({ agentId, initialPath = '' }: FileBrowserProps) {
   const [currentPath, setCurrentPath] = useState(initialPath)
   const [files, setFiles] = useState<FileResponse[]>([])
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showNewFile, setShowNewFile] = useState(false)
   const [newFileName, setNewFileName] = useState('')
@@ -18,8 +17,7 @@ export function FileBrowser({ agentId, initialPath = '' }: FileBrowserProps) {
   const [editingFile, setEditingFile] = useState<FileResponse | null>(null)
   const [editContent, setEditContent] = useState('')
 
-  const loadFiles = async () => {
-    setLoading(true)
+  const loadFiles = useCallback(async () => {
     setError(null)
     try {
       const result = await api.listFiles(agentId, currentPath)
@@ -27,14 +25,12 @@ export function FileBrowser({ agentId, initialPath = '' }: FileBrowserProps) {
     } catch (err) {
       setError('Failed to load files')
       console.error(err)
-    } finally {
-      setLoading(false)
     }
-  }
+  }, [agentId, currentPath])
 
   useEffect(() => {
     loadFiles()
-  }, [agentId, currentPath])
+  }, [loadFiles])
 
   const handleNavigate = (file: FileResponse) => {
     if (file.is_directory) {
@@ -81,11 +77,13 @@ export function FileBrowser({ agentId, initialPath = '' }: FileBrowserProps) {
   }
 
   const handleEditFile = async (file: FileResponse) => {
+    if (file.is_directory) return
     setError(null)
     try {
-      const result = await api.readFile(agentId, file.path)
+      const content = await api.readFile(agentId, `${currentPath}/${file.path}`.replace(/^\//, ''))
       setEditingFile(file)
-      setEditContent(result.content || '')
+      setEditContent(content.content || '')
+      setShowNewFile(true)
     } catch (err) {
       setError('Failed to read file')
       console.error(err)
@@ -96,9 +94,10 @@ export function FileBrowser({ agentId, initialPath = '' }: FileBrowserProps) {
     if (!editingFile) return
     setError(null)
     try {
-      await api.writeFile(agentId, editingFile.path, editContent)
+      await api.writeFile(agentId, `${currentPath}/${editingFile.path}`.replace(/^\//, ''), editContent)
       setEditingFile(null)
       setEditContent('')
+      setShowNewFile(false)
       loadFiles()
     } catch (err) {
       setError('Failed to save file')
@@ -107,10 +106,10 @@ export function FileBrowser({ agentId, initialPath = '' }: FileBrowserProps) {
   }
 
   const handleDelete = async (file: FileResponse) => {
-    if (!confirm(`Delete ${file.path}?`)) return
+    if (!window.confirm(`Delete ${file.path}?`)) return
     setError(null)
     try {
-      await api.deleteFile(agentId, file.path)
+      await api.deleteFile(agentId, `${currentPath}/${file.path}`.replace(/^\//, ''))
       loadFiles()
     } catch (err) {
       setError('Failed to delete file')
@@ -119,175 +118,127 @@ export function FileBrowser({ agentId, initialPath = '' }: FileBrowserProps) {
   }
 
   const formatSize = (size: number | null) => {
-    if (size === null) return ''
+    if (size === null) return '-'
     if (size < 1024) return `${size} B`
     if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
-    return `${(size / 1024 / 1024).toFixed(1)} MB`
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`
   }
 
   const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return ''
+    if (!dateStr) return '-'
     return new Date(dateStr).toLocaleString()
   }
 
   return (
     <div className="file-browser">
-      <div className="file-browser-header flex items-center justify-between mb-4">
+      <div className="file-browser-header">
         <div className="flex items-center gap-2">
-          {currentPath && (
-            <button
-              onClick={handleGoUp}
-              className="text-sm text-gray-500 hover:text-gray-700"
-              title="Go up"
-            >
-              ↑ Up
-            </button>
-          )}
-          <span className="font-mono text-sm text-gray-600">
-            /{currentPath || 'workspace'}
-          </span>
+          <button onClick={handleGoUp} disabled={!currentPath} className="btn btn-sm btn-ghost">
+            ← Up
+          </button>
+          <span className="font-mono text-sm text-gray-600">/{currentPath}</span>
         </div>
-        <button
-          onClick={() => setShowNewFile(true)}
-          className="btn btn-primary text-sm"
-        >
-          New File
+        <button onClick={() => setShowNewFile(true)} className="btn btn-primary btn-sm">
+          + New File
         </button>
       </div>
 
       {error && (
-        <div className="error-message mb-4 p-3 bg-red-50 text-red-700 rounded">
+        <div className="error-banner" role="alert">
           {error}
+          <button onClick={() => setError(null)} className="btn btn-ghost btn-xs ml-2">×</button>
         </div>
       )}
 
-      {showNewFile && (
-        <div className="mb-4 p-4 border rounded bg-gray-50">
+      {showNewFile && !editingFile && (
+        <div className="file-form">
           <h4 className="mb-2">Create New File</h4>
-          <div className="mb-2">
+          <div className="flex gap-2 mb-2">
             <input
               type="text"
               value={newFileName}
               onChange={(e) => setNewFileName(e.target.value)}
-              placeholder="filename.txt or dirname/"
-              className="w-full p-2 border rounded"
+              placeholder="filename.txt"
+              className="input input-sm flex-1"
             />
+            <select
+              value={newFileContent ? 'file' : 'dir'}
+              onChange={(e) => {
+                if (e.target.value === 'dir') {
+                  setNewFileContent('')
+                }
+              }}
+              className="input input-sm"
+            >
+              <option value="file">File</option>
+              <option value="dir">Directory</option>
+            </select>
           </div>
-          <div className="mb-2">
+          {newFileContent !== undefined && newFileContent !== '' && (
             <textarea
               value={newFileContent}
               onChange={(e) => setNewFileContent(e.target.value)}
-              placeholder="File content (leave empty for directory)"
+              placeholder="File content..."
+              className="input input-sm font-mono text-sm mb-2"
               rows={4}
-              className="w-full p-2 border rounded font-mono text-sm"
             />
-          </div>
+          )}
           <div className="flex gap-2">
-            <button onClick={handleCreateFile} className="btn btn-primary">
-              Create File
+            <button onClick={newFileContent === undefined ? handleCreateDirectory : handleCreateFile} className="btn btn-primary btn-sm">
+              {newFileContent === undefined ? 'Create Directory' : 'Create File'}
             </button>
-            <button onClick={handleCreateDirectory} className="btn btn-secondary">
-              Create Directory
-            </button>
-            <button onClick={() => setShowNewFile(false)} className="btn btn-secondary">
-              Cancel
-            </button>
+            <button onClick={() => { setShowNewFile(false); setNewFileName(''); setNewFileContent(''); }} className="btn btn-ghost btn-sm">Cancel</button>
           </div>
         </div>
       )}
 
       {editingFile && (
-        <div className="mb-4 p-4 border rounded bg-gray-50">
-          <h4 className="mb-2">Editing: {editingFile.path}</h4>
+        <div className="file-form">
+          <h4 className="mb-2">Edit {editingFile.path}</h4>
           <textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
+            className="input input-sm font-mono text-sm mb-2"
             rows={10}
-            className="w-full p-2 border rounded font-mono text-sm"
           />
-          <div className="flex gap-2 mt-2">
-            <button onClick={handleSaveEdit} className="btn btn-primary">
-              Save
-            </button>
-            <button
-              onClick={() => {
-                setEditingFile(null)
-                setEditContent('')
-              }}
-              className="btn btn-secondary"
-            >
-              Cancel
-            </button>
+          <div className="flex gap-2">
+            <button onClick={handleSaveEdit} className="btn btn-primary btn-sm">Save</button>
+            <button onClick={() => { setEditingFile(null); setEditContent(''); setShowNewFile(false); }} className="btn btn-ghost btn-sm">Cancel</button>
           </div>
         </div>
       )}
 
-      <div className="file-list border rounded overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="text-left p-3 font-medium">Name</th>
-              <th className="text-left p-3 font-medium">Size</th>
-              <th className="text-left p-3 font-medium">Modified</th>
-              <th className="text-left p-3 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={4} className="p-4 text-center text-gray-500">
-                  Loading...
-                </td>
-              </tr>
-            ) : files.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="p-4 text-center text-gray-500">
-                  No files in this directory
-                </td>
-              </tr>
-            ) : (
-              files.map((file) => (
-                <tr key={file.path} className="border-t hover:bg-gray-50">
-                  <td className="p-3">
-                    <div
-                      className="flex items-center gap-2 cursor-pointer"
-                      onClick={() => handleNavigate(file)}
-                    >
-                      <span>{file.is_directory ? '📁' : '📄'}</span>
-                      <span className={file.is_directory ? 'font-medium' : 'font-mono text-sm'}>
-                        {file.path.split('/').pop() || file.path}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="p-3 text-sm text-gray-500 font-mono">
+      <div className="file-list" role="list">
+        {files.length === 0 ? (
+          <div className="empty-state">No files in this directory</div>
+        ) : (
+          <ul>
+            {files.map((file) => (
+              <li key={file.path} className="file-item">
+                <div className="flex items-center gap-3">
+                  <span className={file.is_directory ? 'text-blue-600' : 'text-gray-600'}>
+                    {file.is_directory ? '📁' : '📄'}
+                  </span>
+                  <span className="font-mono text-sm flex-1 truncate" onClick={() => handleNavigate(file)} style={{ cursor: file.is_directory ? 'pointer' : 'default' }}>
+                    {file.path}
+                  </span>
+                  <span className="text-gray-400 text-xs font-mono whitespace-nowrap">
                     {formatSize(file.size)}
-                  </td>
-                  <td className="p-3 text-sm text-gray-500">
+                  </span>
+                  <span className="text-gray-400 text-xs whitespace-nowrap">
                     {formatDate(file.modified_at)}
-                  </td>
-                  <td className="p-3">
-                    <div className="flex items-center gap-2">
-                      {!file.is_directory && (
-                        <button
-                          onClick={() => handleEditFile(file)}
-                          className="text-sm text-blue-600 hover:underline"
-                        >
-                          Edit
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDelete(file)}
-                        className="text-sm text-red-600 hover:underline"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                  </span>
+                  {!file.is_directory && (
+                    <>
+                      <button onClick={() => handleEditFile(file)} className="btn btn-ghost btn-xs" title="Edit">✏️</button>
+                      <button onClick={() => handleDelete(file)} className="btn btn-ghost btn-xs text-red-600 hover:text-red-700" title="Delete">🗑️</button>
+                    </>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   )

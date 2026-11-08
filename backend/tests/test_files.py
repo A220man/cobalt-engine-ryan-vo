@@ -1,15 +1,13 @@
-import os
-import tempfile
 from pathlib import Path
-from fastapi.testclient import TestClient
 
-from app.main import create_app
-from app.core.database import Base, get_db
+import pytest
 from app.api.deps import get_current_user
-from app.models import User, UserRole, Workspace, Agent, AgentStatus
+from app.core.database import Base, get_db
+from app.main import create_app
+from app.models import Agent, AgentStatus, User, UserRole, Workspace
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import pytest
 
 
 @pytest.fixture(scope="session")
@@ -191,7 +189,7 @@ def test_write_creates_directories(client, demo_user, demo_workspace, demo_agent
     assert data["content"] == "deep content"
 
     # Verify file exists on disk
-    workspace_path = Path(demo_workspace.path)
+    Path(demo_workspace.path)
 
 def test_path_traversal_blocked_all_operations(client, demo_user, demo_workspace, demo_agent, tmp_path):
     """Test that path traversal is blocked for all file operations."""

@@ -1,11 +1,10 @@
 import pytest
+from app.core.database import Base, get_db
+from app.main import create_app
+from app.models import Agent, AgentStatus, User, UserRole, Workspace
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from fastapi.testclient import TestClient
-
-from app.main import create_app
-from app.core.database import Base, get_db
-from app.models import User, UserRole, Workspace, Agent, AgentStatus
 
 
 @pytest.fixture(scope="session")

@@ -1,18 +1,19 @@
 import enum
-from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum as SQLEnum
-from sqlalchemy.orm import relationship
+from datetime import UTC, datetime
 
 from app.core.database import Base
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.orm import relationship
 
 
-class UserRole(str, enum.Enum):
+class UserRole(enum.StrEnum):
     VIEWER = "viewer"
     OPERATOR = "operator"
     ADMIN = "admin"
 
 
-class AgentStatus(str, enum.Enum):
+class AgentStatus(enum.StrEnum):
     ACTIVE = "active"
     INACTIVE = "inactive"
     ERROR = "error"
@@ -26,8 +27,8 @@ class User(Base):
     username = Column(String(255), unique=True, index=True, nullable=False)
     email = Column(String(255), unique=True, index=True, nullable=False)
     role = Column(SQLEnum(UserRole), default=UserRole.OPERATOR, nullable=False)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
 
     agents = relationship("Agent", back_populates="owner", cascade="all, delete-orphan")
     workspaces = relationship("Workspace", back_populates="owner", cascade="all, delete-orphan")
@@ -41,8 +42,8 @@ class Workspace(Base):
     path = Column(String(512), unique=True, nullable=False)
     description = Column(Text, nullable=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
 
     owner = relationship("User", back_populates="workspaces")
     agents = relationship("Agent", back_populates="workspace", cascade="all, delete-orphan")
@@ -58,8 +59,8 @@ class Agent(Base):
     status = Column(SQLEnum(AgentStatus), default=AgentStatus.INACTIVE, nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=False)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
 
     owner = relationship("User", back_populates="agents")
     workspace = relationship("Workspace", back_populates="agents")
@@ -75,6 +76,6 @@ class AuditLog(Base):
     resource_id = Column(Integer, nullable=True)
     details = Column(Text, nullable=True)
     ip_address = Column(String(45), nullable=True)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
 
     user = relationship("User")

@@ -1,18 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from typing import List
 
-from app.api.deps import get_current_user, require_operator_or_admin, require_admin
+from app.api.deps import get_current_user, require_operator_or_admin
 from app.api.schemas import (
     AgentCreate,
-    AgentUpdate,
     AgentRead,
-    AgentStatus,
-    UserRole as SchemaUserRole,
+    AgentUpdate,
 )
 from app.core.database import get_db
-from app.models import Agent, User, Workspace, UserRole as ModelUserRole
-
+from app.models import Agent, User, Workspace
+from app.models import UserRole as ModelUserRole
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 
@@ -37,7 +34,7 @@ def create_agent(
     return agent
 
 
-@router.get("", response_model=List[AgentRead])
+@router.get("", response_model=list[AgentRead])
 def list_agents(
     skip: int = 0,
     limit: int = 100,
