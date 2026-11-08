@@ -1,6 +1,17 @@
 # Changelog
 
+## 1.4.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
 ## 1.3.0 — work-in-progress checkpoint
+
+Fixed linting and code quality issues across the codebase:
+- Backend: All ruff linting issues resolved (imports, type annotations, unused imports, datetime.UTC)
+- Frontend: Added ESLint flat config with TypeScript support; resolved all linting errors
+- FileBrowser: Fixed React Hook useEffect dependency warning; removed unused loading state
+- API client: Fixed unused ImportMeta declaration using Vite reference types
+- All tests pass: 14 backend tests, 5 frontend tests
 
 Partial code published for continued development. Known issues: STATUS.md.
 

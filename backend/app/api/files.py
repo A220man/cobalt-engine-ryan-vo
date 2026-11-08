@@ -1,20 +1,19 @@
-import os
+from datetime import UTC, datetime
 from pathlib import Path
-from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from typing import List, Optional
 
-from app.api.deps import get_current_user, require_operator_or_admin
+from app.api.deps import require_operator_or_admin
 from app.api.schemas import (
+    FileListResponse,
+    FileOperation,
     FileOperationResponse,
     FileRequest,
     FileResponse,
-    FileListResponse,
-    FileOperation,
 )
 from app.core.database import get_db
-from app.models import Agent, Workspace, User, UserRole as ModelUserRole
+from app.models import Agent, User, Workspace
+from app.models import UserRole as ModelUserRole
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/agents/{agent_id}/files", tags=["files"])
 
@@ -67,7 +66,7 @@ def file_operation(
             content=content,
             is_directory=False,
             size=stat.st_size,
-            modified_at=datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc),
+            modified_at=datetime.fromtimestamp(stat.st_mtime, tz=UTC),
         )
 
     elif operation == FileOperation.WRITE:
@@ -83,7 +82,7 @@ def file_operation(
             content=request.content,
             is_directory=False,
             size=stat.st_size,
-            modified_at=datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc),
+            modified_at=datetime.fromtimestamp(stat.st_mtime, tz=UTC),
         )
 
     elif operation == FileOperation.LIST:
@@ -100,7 +99,7 @@ def file_operation(
                     path=entry.name,
                     is_directory=entry.is_dir(),
                     size=stat.st_size if entry.is_file() else None,
-                    modified_at=datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc),
+                    modified_at=datetime.fromtimestamp(stat.st_mtime, tz=UTC),
                 )
             )
         return FileListResponse(files=files, path=request.path)

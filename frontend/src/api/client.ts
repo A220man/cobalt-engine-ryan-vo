@@ -1,14 +1,6 @@
+/// <reference types="vite/client" />
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios'
 import type { Agent, Workspace, User, HealthResponse, FileRequest, FileResponse, FileListResponse, FileOperation } from '../types'
-
-declare global {
-  interface ImportMetaEnv {
-    readonly VITE_API_URL: string
-  }
-  interface ImportMeta {
-    readonly env: ImportMetaEnv
-  }
-}
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -22,25 +14,16 @@ class ApiClient {
       headers: {
         'Content-Type': 'application/json',
       },
-      timeout: 30000,
     })
 
-    this.client.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-      if (this.accessToken) {
-        config.headers.Authorization = `Bearer ${this.accessToken}`
-      }
-      return config
-    })
-
-    this.client.interceptors.response.use(
-      (response) => response,
-      (error: AxiosError) => {
-        if (error.response?.status === 401) {
-          this.clearToken()
-          window.location.href = '/login'
+    this.client.interceptors.request.use(
+      (config: InternalAxiosRequestConfig) => {
+        if (this.accessToken) {
+          config.headers.Authorization = `Bearer ${this.accessToken}`
         }
-        return Promise.reject(error)
-      }
+        return config
+      },
+      (error: AxiosError) => Promise.reject(error)
     )
   }
 
@@ -124,23 +107,35 @@ class ApiClient {
   }
 
   async readFile(agentId: number, path: string): Promise<FileResponse> {
-    const result = await this.fileOperation(agentId, 'read', { path })
-    return result as FileResponse
+    const response = await this.client.post<FileResponse>(
+      `/api/agents/${agentId}/files?operation=read`,
+      { path }
+    )
+    return response.data
   }
 
   async writeFile(agentId: number, path: string, content: string): Promise<FileResponse> {
-    const result = await this.fileOperation(agentId, 'write', { path, content })
-    return result as FileResponse
+    const response = await this.client.post<FileResponse>(
+      `/api/agents/${agentId}/files?operation=write`,
+      { path, content }
+    )
+    return response.data
   }
 
   async listFiles(agentId: number, path: string): Promise<FileListResponse> {
-    const result = await this.fileOperation(agentId, 'list', { path })
-    return result as FileListResponse
+    const response = await this.client.post<FileListResponse>(
+      `/api/agents/${agentId}/files?operation=list`,
+      { path }
+    )
+    return response.data
   }
 
   async deleteFile(agentId: number, path: string): Promise<FileResponse> {
-    const result = await this.fileOperation(agentId, 'delete', { path })
-    return result as FileResponse
+    const response = await this.client.post<FileResponse>(
+      `/api/agents/${agentId}/files?operation=delete`,
+      { path }
+    )
+    return response.data
   }
 }
 

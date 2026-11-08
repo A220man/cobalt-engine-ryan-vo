@@ -1,7 +1,5 @@
+from app.api import agents, files, health, users, workspaces
 from fastapi import APIRouter
-
-from app.api import health, workspaces, agents, users, files
-
 
 api_router = APIRouter(prefix="/api")
 

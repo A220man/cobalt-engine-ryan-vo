@@ -1,20 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from typing import List
 
-from app.api.deps import get_current_user, require_operator_or_admin, require_admin
+from app.api.deps import get_current_user, require_operator_or_admin
 from app.api.schemas import (
     WorkspaceCreate,
     WorkspaceRead,
-    AgentCreate,
-    AgentUpdate,
-    AgentRead,
-    UserRead,
-    UserRole,
 )
 from app.core.database import get_db
-from app.models import Workspace, Agent, User, UserRole as ModelUserRole
-
+from app.models import User, Workspace
+from app.models import UserRole as ModelUserRole
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/workspaces", tags=["workspaces"])
 
@@ -33,7 +27,7 @@ def create_workspace(
     return workspace
 
 
-@router.get("", response_model=List[WorkspaceRead])
+@router.get("", response_model=list[WorkspaceRead])
 def list_workspaces(
     skip: int = 0,
     limit: int = 100,

@@ -1,15 +1,16 @@
 from datetime import datetime
-from typing import Optional, Union
-from pydantic import BaseModel, ConfigDict
-from enum import Enum
+from enum import StrEnum
 
-class UserRole(str, Enum):
+from pydantic import BaseModel, ConfigDict
+
+
+class UserRole(StrEnum):
     VIEWER = "viewer"
     OPERATOR = "operator"
     ADMIN = "admin"
 
 
-class AgentStatus(str, Enum):
+class AgentStatus(StrEnum):
     ACTIVE = "active"
     INACTIVE = "inactive"
     ERROR = "error"
@@ -37,7 +38,7 @@ class UserRead(UserBase):
 class WorkspaceBase(BaseModel):
     name: str
     path: str
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class WorkspaceCreate(WorkspaceBase):
@@ -55,8 +56,8 @@ class WorkspaceRead(WorkspaceBase):
 
 class AgentBase(BaseModel):
     name: str
-    description: Optional[str] = None
-    system_prompt: Optional[str] = None
+    description: str | None = None
+    system_prompt: str | None = None
 
 
 class AgentCreate(AgentBase):
@@ -64,10 +65,10 @@ class AgentCreate(AgentBase):
 
 
 class AgentUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    system_prompt: Optional[str] = None
-    status: Optional[AgentStatus] = None
+    name: str | None = None
+    description: str | None = None
+    system_prompt: str | None = None
+    status: AgentStatus | None = None
 
 
 class AgentRead(AgentBase):
@@ -79,7 +80,7 @@ class AgentRead(AgentBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
-class FileOperation(str, Enum):
+class FileOperation(StrEnum):
     READ = "read"
     WRITE = "write"
     LIST = "list"
@@ -88,24 +89,23 @@ class FileOperation(str, Enum):
 
 class FileRequest(BaseModel):
     path: str
-    content: Optional[str] = None
+    content: str | None = None
 
 
 class FileResponse(BaseModel):
     path: str
-    content: Optional[str] = None
+    content: str | None = None
     is_directory: bool = False
-    size: Optional[int] = None
-    modified_at: Optional[datetime] = None
+    size: int | None = None
+    modified_at: datetime | None = None
 
 
 class FileListResponse(BaseModel):
     files: list[FileResponse]
     path: str
 
-from typing import Union
 
-FileOperationResponse = Union[FileResponse, FileListResponse]
+FileOperationResponse = FileResponse | FileListResponse
 class HealthResponse(BaseModel):
     status: str
     version: str = "1.0.0"

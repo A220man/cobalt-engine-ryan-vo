@@ -1,11 +1,9 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-
 from app.api.deps import get_current_user, require_admin
-from app.api.schemas import UserRead, UserRole
+from app.api.schemas import UserRead
 from app.core.database import get_db
 from app.models import User
-
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/users", tags=["users"])
 
