@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "current_feature": "agent-workspace-isolation",
+  "features": [
+    {
+      "id": "project-skeleton",
+      "title": "Project skeleton with FastAPI backend and React frontend",
+      "status": "done",
+      "acceptance": [
+        "Backend FastAPI app runs at /api/health"
+      ],
+      "implementation": [
+        "backend/app/main.py",
+        "backend/app/api/health.py"
+      ],
+      "tests": [
+        "backend/tests/test_health.py"
+      ]
+    },
+    {
+      "id": "agent-workspace-isolation",
+      "title": "Agent workspace sandbox isolation (Issue #1160)",
+      "status": "done",
+      "acceptance": [
+        "Each agent confined to its workspace directory"
+      ],
+      "implementation": [
+        "backend/app/api/files.py"
+      ],
+      "tests": [
+        "backend/tests/test_files.py"
+      ]
+    },
+    {
+      "id": "mcp-server-exposure",
+      "title": "MCP server exposure for memory system (Issue #322)",
+      "status": "done",
+      "acceptance": [
+        "MCP server runs and exposes tools",
+        "External AI can connect and use memory tools",
+        "Tools: read_memory, write_memory, search_memory"
+      ],
+      "implementation": [
+        "backend/app/api/mcp.py"
+      ],
+      "tests": [
+        "backend/tests/test_mcp.py"
+      ]
+    },
+    {
+      "id": "multi-user-isolation",
+      "title": "Multi-user data/workspace isolation (Issue #2207)",
+      "status": "planned",
+      "acceptance": [],
+      "implementation": [],
+      "tests": []
+    },
+    {
+      "id": "oidc-keycloak-auth",
+      "title": "OIDC/Keycloak authentication with SAML broker",
+      "status": "planned",
+      "acceptance": [],
+      "implementation": [],
+      "tests": []
+    }
+  ]
+}
