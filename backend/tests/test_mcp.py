@@ -1,3 +1,6 @@
+import os
+os.environ["DEMO_MODE"] = "true"
+
 def test_mcp_tools_list(client):
     response = client.get("/api/mcp/tools")
     assert response.status_code == 200

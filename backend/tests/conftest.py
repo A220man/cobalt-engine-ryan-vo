@@ -1,3 +1,6 @@
+import os
+os.environ["DEMO_MODE"] = "true"
+
 import pytest
 from app.core.database import Base, get_db
 from app.main import create_app
@@ -28,6 +31,7 @@ def db_session(engine):
 
 @pytest.fixture(scope="function")
 def client(db_session):
+    # Demo mode is enabled via environment variable
     def override_get_db():
         try:
             yield db_session
