@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cobalt-engine"
-version = "1.7.0"
+version = "1.8.0"
 description = "A smarter, self-hosted AI assistant — multi-user, multi-agent"
 readme = "README.md"
 authors = [{name = "Ryan Vo", email = "ryandtvo@gmail.com"}]
